@@ -8,7 +8,7 @@ class Log
     //if(!file_exists('C:\inetpub\wwwroot\tbc\log\\'.$log_name)){ $log_name='a_default_log.log'; }
     $this->log_name=$log_name;
 
-    $this->log_file='C:\xampp\htdocs\tbcdev\log\\'.$this->log_name;
+    $this->log_file='D:\tbclog\\'.$this->log_name;
     $this->log=fopen($this->log_file,'w+');
     }
   public function log_msg($msg)
@@ -61,29 +61,31 @@ class RealSoapClient extends SoapClient {
 		$this->xsitypes = $options["XsiTypes"];
 		$this->objectname = $options["ObjectName"];
 
-        // SOAP Service URL
-        $serviceUrl = "https://secdbi.tbconline.ge/dbi/dbiService";
+		if(isset($_GET['cert']) && !empty($_GET['cert'])) {
+			// SOAP Service URL
+			$serviceUrl = "https://secdbi.tbconline.ge/dbi/dbiService";
 
-        // Convert PFX to PEM format (PersistKeySet equivalent)
-        $certFile = __DIR__ . "/".$_GET['cert'].".pem";
-        $keyFile  = __DIR__ . "/".$_GET['cert'].".key";
+			// Convert PFX to PEM format (PersistKeySet equivalent)
+			$certFile = __DIR__ . "/".$_GET['cert'].".pem";
+			$keyFile  = __DIR__ . "/".$_GET['cert'].".key";
 
-        // Create a stream context
-        $streamContext = stream_context_create([
-            'ssl' => [
-                'local_cert'     => $certFile,  // Persisted certificate
-                'local_pk'       => $keyFile,   // Persisted private key
-                'verify_peer'    => false, // Disable peer verification for dev
-                'verify_peer_name' => false,
-                'crypto_method'  => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | 
-                                    STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | 
-                                    STREAM_CRYPTO_METHOD_TLS_CLIENT | 
-                                    STREAM_CRYPTO_METHOD_SSLv3_CLIENT,
-            ]
-        ]);
+			// Create a stream context
+			$streamContext = stream_context_create([
+				'ssl' => [
+					'local_cert'     => $certFile,  // Persisted certificate
+					'local_pk'       => $keyFile,   // Persisted private key
+					'verify_peer'    => false, // Disable peer verification for dev
+					'verify_peer_name' => false,
+					'crypto_method'  => STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT | 
+										STREAM_CRYPTO_METHOD_TLSv1_1_CLIENT | 
+										STREAM_CRYPTO_METHOD_TLS_CLIENT | 
+										STREAM_CRYPTO_METHOD_SSLv3_CLIENT,
+				]
+			]);
 
-        $options['stream_context'] = $streamContext;
-        $options['location'] = $serviceUrl; // Setting the service URL
+			$options['stream_context'] = $streamContext;
+			$options['location'] = $serviceUrl; // Setting the service URL
+		}
 		
 		parent::__construct($wsdl, $options);
     }
@@ -177,6 +179,11 @@ class Retranslator {
 	public function GetAccountMovements($param)
 	{
 		return $this->retranslate("GetAccountMovements", $param);
+	}
+	
+	public function GetAccountStatement($param)
+	{
+		return $this->retranslate("GetAccountStatement", $param);
 	}
 	
 	public function GetMessagesFromPostbox($param)
@@ -276,7 +283,12 @@ class Retranslator {
 
 }
 
-$location = "http://".$_SERVER['HTTP_HOST'].str_replace("service.php", "retranslator.php", $_SERVER['PHP_SELF'])."?cert=".$_GET['cert'];
+
+if(isset($_GET['cert']) && !empty($_GET['cert'])) {
+	$location = "http://".$_SERVER['HTTP_HOST'].str_replace("service.php", "retranslator.php", $_SERVER['PHP_SELF'])."?cert=".$_GET['cert'];
+} else {
+	$location = "http://".$_SERVER['HTTP_HOST'].str_replace("service.php", "retranslator.php", $_SERVER['PHP_SELF']);
+}
 
 $options= array('uri'=>'./service.php');
 $server=new \SoapServer($location, $options);

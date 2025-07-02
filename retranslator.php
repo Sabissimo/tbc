@@ -1,7 +1,13 @@
 <?php
 header('Content-Type: text/xml');
 
-$location = "http://".$_SERVER['HTTP_HOST'].str_replace("retranslator.php", "service.php", $_SERVER['PHP_SELF'])."?cert=".$_GET['cert'];
+if(!isset($_GET['cert']) || empty($_GET['cert'])) {
+	$location = "http://".$_SERVER['HTTP_HOST'].str_replace("retranslator.php", "service.php", $_SERVER['PHP_SELF']);
+}
+else {
+	$location = "http://".$_SERVER['HTTP_HOST'].str_replace("retranslator.php", "service.php", $_SERVER['PHP_SELF'])."?cert=".$_GET['cert'];
+}
+
 
 
 ?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
@@ -1015,6 +1021,122 @@ $location = "http://".$_SERVER['HTTP_HOST'].str_replace("retranslator.php", "ser
 			</xsd:sequence>
 		</xsd:complexType>
 	</xsd:element>
+
+	<xsd:element name="GetAccountStatementRequestIo">
+		<xsd:annotation>
+			<xsd:documentation>Get Account statement for given time period request object</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="AuthHeader" type="AuthHeader" minOccurs="0" maxOccurs="1">
+					<xsd:annotation>
+						<xsd:documentation>Auth Header</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element name="filter" type="AccountStatementFilterIo" minOccurs="1" maxOccurs="1">
+					<xsd:annotation>
+						<xsd:documentation>Account statement request filter</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="GetAccountStatementResponseIo">
+		<xsd:annotation>
+			<xsd:documentation>Get Account statement for given time period response object</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="statement" type="AccountStatementIo" minOccurs="1" maxOccurs="1">
+					<xsd:annotation>
+						<xsd:documentation>Account statement</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:complexType name="AccountStatementFilterIo">
+		<xsd:annotation>
+			<xsd:documentation>Filter (request) for account statement</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="AbstractIo">
+				<xsd:sequence>
+					<xsd:element name="periodFrom" type="xsd:date" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Time period start date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="periodTo" type="xsd:date" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Time period end date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="accountNumber" type="xsd:string" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Account number</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>			
+					<xsd:element name="currency" type="xsd:string" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Account currency code</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	
+	<xsd:complexType name="AccountStatementIo">
+		<xsd:annotation>
+			<xsd:documentation>Statement for account</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="AbstractIo">
+				<xsd:sequence>
+					<xsd:element name="openingDate" type="xsd:date" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Time period start date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="openingBalance" type="xsd:float" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Account balance for start date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="closingDate" type="xsd:date" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Time period end date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="closingBalance" type="xsd:float" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Account balance for end date</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+
+					<xsd:element name="creditSum" type="xsd:float" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Sum of all credit operations (from given range)</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+					<xsd:element name="debitSum" type="xsd:float" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Sum of all debit operations (from given range)</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+
+					<xsd:element name="currency" type="xsd:string" minOccurs="1" maxOccurs="1">
+						<xsd:annotation>
+							<xsd:documentation>Account currency</xsd:documentation>
+						</xsd:annotation>
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
 </xsd:schema>
 
 
@@ -1247,6 +1369,39 @@ $location = "http://".$_SERVER['HTTP_HOST'].str_replace("retranslator.php", "ser
 
 	<wsdl:service name="PostboxService">
 		<wsdl:port binding="tns:PostboxServiceBinding" name="PostboxServicePort">
+			<soap:address location="<?php echo $location;?>" />
+		</wsdl:port>
+	</wsdl:service>
+
+	<wsdl:message name="GetAccountStatementRequest">
+		<wsdl:part element="tns:GetAccountStatementRequestIo" name="parameters" />
+	</wsdl:message>
+	<wsdl:message name="GetAccountStatementResponse">
+		<wsdl:part element="tns:GetAccountStatementResponseIo" name="parameters" />
+	</wsdl:message>
+
+	<wsdl:portType name="StatementService">
+		<wsdl:operation name="GetAccountStatement">
+			<wsdl:input message="tns:GetAccountStatementRequest" />
+			<wsdl:output message="tns:GetAccountStatementResponse" />
+		</wsdl:operation>
+	</wsdl:portType>
+
+	<wsdl:binding name="StatementServiceBinding" type="tns:StatementService">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="GetAccountStatement">
+			<soap:operation soapAction="http://www.mygemini.com/schemas/mygemini/GetAccountStatement" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+
+	<wsdl:service name="StatementService">
+		<wsdl:port binding="tns:StatementServiceBinding" name="StatementServicePort">
 			<soap:address location="<?php echo $location;?>" />
 		</wsdl:port>
 	</wsdl:service>
